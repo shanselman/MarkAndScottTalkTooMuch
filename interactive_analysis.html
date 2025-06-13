@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark & Scott Talk Too Much - Interactive Analysis</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover, button:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .chart {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .chart h3 {
+            margin: 0 0 20px 0;
+            font-size: 1.4rem;
+            color: #333;
+            text-align: center;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 200px;
+            z-index: 1000;
+        }
+
+        .bar {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            stroke: #333;
+            stroke-width: 2;
+        }
+
+        .axis {
+            font-size: 11px;
+        }
+
+        .axis text {
+            fill: #666;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #ddd;
+            shape-rendering: crispEdges;
+        }
+
+        .grid line {
+            stroke: #eee;
+            stroke-dasharray: 2,2;
+        }
+
+        .mark-color { color: #1f77b4; }
+        .scott-color { color: #ff7f0e; }
+
+        .speaker-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Mark & Scott Talk Too Much</h1>
+            <p>Interactive Podcast Speaking Time Analysis</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>View Type</label>
+                <select id="viewType">
+                    <option value="episodes">Episode Comparison</option>
+                    <option value="totals">Total Speaking Time</option>
+                    <option value="percentages">Percentage View</option>
+                    <option value="timeline">Timeline View</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Sort By</label>
+                <select id="sortBy">
+                    <option value="episode">Episode Order</option>
+                    <option value="mark-time">Mark's Time</option>
+                    <option value="scott-time">Scott's Time</option>
+                    <option value="total-time">Total Time</option>
+                    <option value="difference">Time Difference</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Filter Episodes</label>
+                <select id="episodeFilter">
+                    <option value="all">All Episodes</option>
+                    <option value="main">Main Episodes Only</option>
+                    <option value="smlt">SMLT Episodes</option>
+                    <option value="specials">Specials & Bonus</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Animation</label>
+                <button id="animateBtn" class="active">Animate</button>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value mark-color" id="markTotal">0m</div>
+                <div class="stat-label">Mark's Total Time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value scott-color" id="scottTotal">0m</div>
+                <div class="stat-label">Scott's Total Time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="episodeCount">0</div>
+                <div class="stat-label">Episodes Analyzed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="winner">-</div>
+                <div class="stat-label">Talks More</div>
+            </div>
+        </div>
+
+        <div class="speaker-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #1f77b4;"></div>
+                <span>Mark</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff7f0e;"></div>
+                <span>Scott</span>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart">
+                <h3 id="chartTitle">Episode Speaking Time Comparison</h3>
+                <div id="chart"></div>
+            </div>
+        </div>
+
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script>
+        // Data will be loaded from the JSON file
+        let transcriptData = [];
+        let currentData = [];
+        let animationEnabled = true;
+
+        // Chart dimensions and margins
+        const margin = { top: 20, right: 30, bottom: 100, left: 60 };
+        let width = 1000 - margin.left - margin.right;
+        let height = 500 - margin.bottom - margin.top;
+
+        // Color scheme
+        const colors = {
+            mark: '#1f77b4',
+            scott: '#ff7f0e'
+        };
+
+        // Initialize the visualization
+        function init() {
+            // Responsive width
+            const container = document.getElementById('chart');
+            width = Math.min(1000, container.offsetWidth - 40) - margin.left - margin.right;
+            
+            loadData();
+            setupEventListeners();
+        }
+
+        function loadData() {
+            // Load data from the generated JSON file
+            d3.json("transcript_data.json").then(function(data) {
+                transcriptData = data;
+                
+                // Process additional calculations if needed
+                transcriptData.forEach(d => {
+                    // Data is already processed in the JSON generation script
+                });
+
+                currentData = [...transcriptData];
+                updateVisualization();
+                updateStats();
+            }).catch(function(error) {
+                console.log("Could not load data file, using fallback data");
+                loadFallbackData();
+            });
+        }
+
+        function loadFallbackData() {
+            // Fallback data for when JSON file is not available
+            // This contains the actual analyzed data from your transcripts
+            transcriptData = [
+                { episode: "EP4 - Program Language", markTime: 13.1, scottTime: 28.0, markWords: 2090, scottWords: 4311 },
+                { episode: "EP5 - Undocumented APIs", markTime: 15.8, scottTime: 17.1, markWords: 2439, scottWords: 2631 },
+                { episode: "EP6 - Cold Open", markTime: 2.3, scottTime: 5.3, markWords: 365, scottWords: 816 },
+                { episode: "EP6 - Dump Files - Redline", markTime: 23.5, scottTime: 35.0, markWords: 3736, scottWords: 5466 },
+                { episode: "EP7 - Hobbies", markTime: 16.8, scottTime: 33.9, markWords: 2680, scottWords: 5264 },
+                { episode: "EP8 - History of Azure", markTime: 25.7, scottTime: 19.3, markWords: 3908, scottWords: 2957 },
+                { episode: "EP9 - Technical Speaking", markTime: 18.8, scottTime: 27.6, markWords: 2902, scottWords: 4226 },
+                { episode: "EP9 & EP10 - Cold Opens - Redline", markTime: 5.9, scottTime: 15.2, markWords: 955, scottWords: 2347 },
+                { episode: "EP10 - Zoomit", markTime: 14.7, scottTime: 25.1, markWords: 2306, scottWords: 3852 },
+                { episode: "EP11 - Redline - System Thinking", markTime: 22.1, scottTime: 22.8, markWords: 3391, scottWords: 3509 },
+                { episode: "SMLT - EP12 - Reputation", markTime: 13.4, scottTime: 24.8, markWords: 2089, scottWords: 3810 },
+                { episode: "SMLT - EP13 - Untitled", markTime: 9.4, scottTime: 13.2, markWords: 1470, scottWords: 2056 },
+                { episode: "EP14 - Vibe Coding (visual)", markTime: 13.2, scottTime: 34.8, markWords: 2167, scottWords: 5408 },
+                { episode: "EP15 - Vibe Coding (discussion)", markTime: 22.0, scottTime: 19.3, markWords: 3366, scottWords: 2964 },
+                { episode: "EP16 - Untitled", markTime: 16.1, scottTime: 22.3, markWords: 2492, scottWords: 3428 },
+                { episode: "EP17 - Untitled", markTime: 15.2, scottTime: 24.5, markWords: 2401, scottWords: 3825 },
+                { episode: "SMLT - EP18 - Untitled", markTime: 12.9, scottTime: 25.5, markWords: 2019, scottWords: 3915 },
+                { episode: "SMLT - EP19 - Untitled", markTime: 15.8, scottTime: 24.7, markWords: 2459, scottWords: 3803 },
+                { episode: "Scott&Mark - EP1 - Redline", markTime: 11.8, scottTime: 15.6, markWords: 1796, scottWords: 2377 },
+                { episode: "Scott&Mark - Ship the Org Chart", markTime: 13.1, scottTime: 16.2, markWords: 2003, scottWords: 2468 },
+                { episode: "Scott&Mark - AI limitations", markTime: 20.4, scottTime: 23.2, markWords: 3120, scottWords: 3539 },
+                { episode: "Bonus - Skin Care", markTime: 4.1, scottTime: 14.5, markWords: 667, scottWords: 2219 }
+            ];
+
+            // Process data
+            transcriptData.forEach(d => {
+                d.totalTime = d.markTime + d.scottTime;
+                d.totalWords = d.markWords + d.scottWords;
+                d.markPercentage = (d.markTime / d.totalTime) * 100;
+                d.scottPercentage = (d.scottTime / d.totalTime) * 100;
+                d.timeDifference = Math.abs(d.scottTime - d.markTime);
+                d.episodeNumber = extractEpisodeNumber(d.episode);
+            });
+
+            currentData = [...transcriptData];
+            updateVisualization();
+            updateStats();
+        }
+
+        function extractEpisodeNumber(episode) {
+            const match = episode.match(/EP(\d+)/i);
+            if (match) return parseInt(match[1]);
+            if (episode.includes('Bonus')) return 1000;
+            if (episode.includes('Ship')) return 1001;
+            if (episode.includes('AI')) return 1002;
+            return 999;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('viewType').addEventListener('change', updateVisualization);
+            document.getElementById('sortBy').addEventListener('change', updateVisualization);
+            document.getElementById('episodeFilter').addEventListener('change', filterData);
+            
+            document.getElementById('animateBtn').addEventListener('click', function() {
+                animationEnabled = !animationEnabled;
+                this.classList.toggle('active', animationEnabled);
+                this.textContent = animationEnabled ? 'Animate' : 'Static';
+            });
+
+            // Responsive resize
+            window.addEventListener('resize', () => {
+                const container = document.getElementById('chart');
+                const newWidth = Math.min(1000, container.offsetWidth - 40) - margin.left - margin.right;
+                if (Math.abs(newWidth - width) > 50) {
+                    width = newWidth;
+                    updateVisualization();
+                }
+            });
+        }
+
+        function filterData() {
+            const filter = document.getElementById('episodeFilter').value;
+            
+            switch(filter) {
+                case 'main':
+                    currentData = transcriptData.filter(d => d.episode.startsWith('EP') && !d.episode.includes('SMLT'));
+                    break;
+                case 'smlt':
+                    currentData = transcriptData.filter(d => d.episode.includes('SMLT'));
+                    break;
+                case 'specials':
+                    currentData = transcriptData.filter(d => d.episode.includes('Bonus') || d.episode.includes('Ship') || d.episode.includes('AI') || d.episode.includes('Scott&Mark'));
+                    break;
+                default:
+                    currentData = [...transcriptData];
+            }
+            
+            updateVisualization();
+            updateStats();
+        }
+
+        function updateVisualization() {
+            const viewType = document.getElementById('viewType').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            // Sort data
+            sortData(sortBy);
+            
+            // Clear previous chart
+            d3.select('#chart').selectAll('*').remove();
+            
+            // Update chart title
+            const titles = {
+                episodes: 'Episode Speaking Time Comparison',
+                totals: 'Total Speaking Time Distribution',
+                percentages: 'Speaking Time Percentages',
+                timeline: 'Speaking Time Timeline'
+            };
+            document.getElementById('chartTitle').textContent = titles[viewType];
+            
+            // Render based on view type
+            switch(viewType) {
+                case 'episodes':
+                    renderEpisodeComparison();
+                    break;
+                case 'totals':
+                    renderTotalsView();
+                    break;
+                case 'percentages':
+                    renderPercentageView();
+                    break;
+                case 'timeline':
+                    renderTimelineView();
+                    break;
+            }
+        }
+
+        function sortData(sortBy) {
+            switch(sortBy) {
+                case 'episode':
+                    currentData.sort((a, b) => a.episodeNumber - b.episodeNumber);
+                    break;
+                case 'mark-time':
+                    currentData.sort((a, b) => b.markTime - a.markTime);
+                    break;
+                case 'scott-time':
+                    currentData.sort((a, b) => b.scottTime - a.scottTime);
+                    break;
+                case 'total-time':
+                    currentData.sort((a, b) => b.totalTime - a.totalTime);
+                    break;
+                case 'difference':
+                    currentData.sort((a, b) => b.timeDifference - a.timeDifference);
+                    break;
+            }
+        }
+
+        function renderEpisodeComparison() {
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // Scales
+            const x = d3.scaleBand()
+                .domain(currentData.map(d => d.episode))
+                .range([0, width])
+                .padding(0.1);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(currentData, d => Math.max(d.markTime, d.scottTime))])
+                .nice()
+                .range([height, 0]);
+
+            // Grid
+            g.append('g')
+                .attr('class', 'grid')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x).tickSize(-height).tickFormat(''));
+
+            g.append('g')
+                .attr('class', 'grid')
+                .call(d3.axisLeft(y).tickSize(-width).tickFormat(''));
+
+            // Bars
+            const barWidth = x.bandwidth() / 2;
+
+            // Mark's bars
+            g.selectAll('.bar-mark')
+                .data(currentData)
+                .enter().append('rect')
+                .attr('class', 'bar bar-mark')
+                .attr('x', d => x(d.episode))
+                .attr('y', height)
+                .attr('width', barWidth)
+                .attr('height', 0)
+                .attr('fill', colors.mark)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `<strong>${d.episode}</strong><br/>Mark: ${d.markTime}m (${d.markWords} words)`);
+                })
+                .on('mouseout', hideTooltip);
+
+            // Scott's bars
+            g.selectAll('.bar-scott')
+                .data(currentData)
+                .enter().append('rect')
+                .attr('class', 'bar bar-scott')
+                .attr('x', d => x(d.episode) + barWidth)
+                .attr('y', height)
+                .attr('width', barWidth)
+                .attr('height', 0)
+                .attr('fill', colors.scott)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `<strong>${d.episode}</strong><br/>Scott: ${d.scottTime}m (${d.scottWords} words)`);
+                })
+                .on('mouseout', hideTooltip);
+
+            // Animate bars
+            if (animationEnabled) {
+                g.selectAll('.bar-mark')
+                    .transition()
+                    .duration(800)
+                    .delay((d, i) => i * 50)
+                    .attr('y', d => y(d.markTime))
+                    .attr('height', d => height - y(d.markTime));
+
+                g.selectAll('.bar-scott')
+                    .transition()
+                    .duration(800)
+                    .delay((d, i) => i * 50)
+                    .attr('y', d => y(d.scottTime))
+                    .attr('height', d => height - y(d.scottTime));
+            } else {
+                g.selectAll('.bar-mark')
+                    .attr('y', d => y(d.markTime))
+                    .attr('height', d => height - y(d.markTime));
+
+                g.selectAll('.bar-scott')
+                    .attr('y', d => y(d.scottTime))
+                    .attr('height', d => height - y(d.scottTime));
+            }
+
+            // Axes
+            g.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-45)');
+
+            g.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y).tickFormat(d => `${d}m`));
+
+            // Axis labels
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 0 - margin.left)
+                .attr('x', 0 - (height / 2))
+                .attr('dy', '1em')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('fill', '#666')
+                .text('Speaking Time (minutes)');
+        }
+
+        function renderTotalsView() {
+            const totalMark = d3.sum(currentData, d => d.markTime);
+            const totalScott = d3.sum(currentData, d => d.scottTime);
+            
+            const data = [
+                { speaker: 'Mark', time: totalMark, color: colors.mark },
+                { speaker: 'Scott', time: totalScott, color: colors.scott }
+            ];
+
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .domain(data.map(d => d.speaker))
+                .range([0, width])
+                .padding(0.3);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.time)])
+                .nice()
+                .range([height, 0]);
+
+            // Bars
+            g.selectAll('.bar')
+                .data(data)
+                .enter().append('rect')
+                .attr('class', 'bar')
+                .attr('x', d => x(d.speaker))
+                .attr('y', height)
+                .attr('width', x.bandwidth())
+                .attr('height', 0)
+                .attr('fill', d => d.color)
+                .on('mouseover', function(event, d) {
+                    const hours = Math.floor(d.time / 60);
+                    const minutes = Math.round(d.time % 60);
+                    showTooltip(event, `<strong>${d.speaker}</strong><br/>${d.time.toFixed(1)}m (${hours}h ${minutes}m)`);
+                })
+                .on('mouseout', hideTooltip);
+
+            // Animate bars
+            if (animationEnabled) {
+                g.selectAll('.bar')
+                    .transition()
+                    .duration(1000)
+                    .ease(d3.easeBounce)
+                    .attr('y', d => y(d.time))
+                    .attr('height', d => height - y(d.time));
+            } else {
+                g.selectAll('.bar')
+                    .attr('y', d => y(d.time))
+                    .attr('height', d => height - y(d.time));
+            }
+
+            // Value labels
+            g.selectAll('.value-label')
+                .data(data)
+                .enter().append('text')
+                .attr('class', 'value-label')
+                .attr('x', d => x(d.speaker) + x.bandwidth() / 2)
+                .attr('y', d => y(d.time) - 10)
+                .attr('text-anchor', 'middle')
+                .style('font-weight', 'bold')
+                .style('font-size', '14px')
+                .text(d => `${d.time.toFixed(0)}m`);
+
+            // Axes
+            g.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x));
+
+            g.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y).tickFormat(d => `${d}m`));
+        }
+
+        function renderPercentageView() {
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .domain(currentData.map(d => d.episode))
+                .range([0, width])
+                .padding(0.1);
+
+            const y = d3.scaleLinear()
+                .domain([0, 100])
+                .range([height, 0]);
+
+            // Stacked bars
+            currentData.forEach(d => {
+                // Mark's percentage (bottom)
+                g.append('rect')
+                    .attr('class', 'bar')
+                    .attr('x', x(d.episode))
+                    .attr('y', y(d.markPercentage))
+                    .attr('width', x.bandwidth())
+                    .attr('height', height - y(d.markPercentage))
+                    .attr('fill', colors.mark)
+                    .on('mouseover', function(event) {
+                        showTooltip(event, `<strong>${d.episode}</strong><br/>Mark: ${d.markPercentage.toFixed(1)}%`);
+                    })
+                    .on('mouseout', hideTooltip);
+
+                // Scott's percentage (top)
+                g.append('rect')
+                    .attr('class', 'bar')
+                    .attr('x', x(d.episode))
+                    .attr('y', y(100))
+                    .attr('width', x.bandwidth())
+                    .attr('height', height - y(d.scottPercentage))
+                    .attr('fill', colors.scott)
+                    .on('mouseover', function(event) {
+                        showTooltip(event, `<strong>${d.episode}</strong><br/>Scott: ${d.scottPercentage.toFixed(1)}%`);
+                    })
+                    .on('mouseout', hideTooltip);
+            });
+
+            // Axes
+            g.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-45)');
+
+            g.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y).tickFormat(d => `${d}%`));
+
+            // 50% line
+            g.append('line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', y(50))
+                .attr('y2', y(50))
+                .attr('stroke', '#333')
+                .attr('stroke-dasharray', '5,5')
+                .attr('opacity', 0.7);
+        }
+
+        function renderTimelineView() {
+            // Sort by episode number for timeline
+            const sortedData = [...currentData].sort((a, b) => a.episodeNumber - b.episodeNumber);
+            
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scalePoint()
+                .domain(sortedData.map((d, i) => i))
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(sortedData, d => Math.max(d.markTime, d.scottTime))])
+                .nice()
+                .range([height, 0]);
+
+            // Lines
+            const markLine = d3.line()
+                .x((d, i) => x(i))
+                .y(d => y(d.markTime))
+                .curve(d3.curveMonotoneX);
+
+            const scottLine = d3.line()
+                .x((d, i) => x(i))
+                .y(d => y(d.scottTime))
+                .curve(d3.curveMonotoneX);
+
+            // Draw lines
+            g.append('path')
+                .datum(sortedData)
+                .attr('fill', 'none')
+                .attr('stroke', colors.mark)
+                .attr('stroke-width', 3)
+                .attr('d', markLine);
+
+            g.append('path')
+                .datum(sortedData)
+                .attr('fill', 'none')
+                .attr('stroke', colors.scott)
+                .attr('stroke-width', 3)
+                .attr('d', scottLine);
+
+            // Points
+            g.selectAll('.mark-point')
+                .data(sortedData)
+                .enter().append('circle')
+                .attr('class', 'mark-point')
+                .attr('cx', (d, i) => x(i))
+                .attr('cy', d => y(d.markTime))
+                .attr('r', 5)
+                .attr('fill', colors.mark)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `<strong>${d.episode}</strong><br/>Mark: ${d.markTime}m`);
+                })
+                .on('mouseout', hideTooltip);
+
+            g.selectAll('.scott-point')
+                .data(sortedData)
+                .enter().append('circle')
+                .attr('class', 'scott-point')
+                .attr('cx', (d, i) => x(i))
+                .attr('cy', d => y(d.scottTime))
+                .attr('r', 5)
+                .attr('fill', colors.scott)
+                .on('mouseover', function(event, d) {
+                    showTooltip(event, `<strong>${d.episode}</strong><br/>Scott: ${d.scottTime}m`);
+                })
+                .on('mouseout', hideTooltip);
+
+            // Axes
+            g.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x).tickFormat((d, i) => `EP${sortedData[i].episodeNumber}`));
+
+            g.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y).tickFormat(d => `${d}m`));
+        }
+
+        function updateStats() {
+            const totalMark = d3.sum(currentData, d => d.markTime);
+            const totalScott = d3.sum(currentData, d => d.scottTime);
+            const episodeCount = currentData.length;
+            const winner = totalScott > totalMark ? 'Scott' : 'Mark';
+
+            document.getElementById('markTotal').textContent = `${Math.round(totalMark)}m`;
+            document.getElementById('scottTotal').textContent = `${Math.round(totalScott)}m`;
+            document.getElementById('episodeCount').textContent = episodeCount;
+            document.getElementById('winner').textContent = winner;
+        }
+
+        function showTooltip(event, content) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = content;
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.opacity = 0;
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
