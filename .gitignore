@@ -40,11 +40,15 @@ Thumbs.db
 *.docx
 *:sec.endpointdlp
 
-# Large output files (can be regenerated)
+# Generated transcript inputs stay local/private
+transcripts/
+
+# Keep most bulky one-off exports out of git, but publish the Pages-facing reports
 *.png
 *.csv
-transcript_data.json
-transcripts/
+!talk_time_analysis.png
+!transcript_analysis_report.csv
+!transcript_data.json
 
 # Temporary files
 *.tmp

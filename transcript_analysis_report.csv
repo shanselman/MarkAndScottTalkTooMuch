@@ -1,0 +1,38 @@
+Episode,Mark_Words,Scott_Words,Mark_Time_Seconds,Scott_Time_Seconds,Mark_Time_Formatted,Scott_Time_Formatted,Mark_Segments,Scott_Segments,Total_Words,Mark_Word_Percentage,Scott_Word_Percentage,Winner_by_Words,Word_Difference
+(Trailer).txt,293,285,115,112,00:01:55,00:01:52,9,9,578,50.7,49.3,Mark,8
+BONUS - Scott & Mark Learn To... Skin Care.txt,1073,1127,418,442,00:06:58,00:07:22,35,35,2200,48.8,51.2,Scott,54
+connect the dots - Microsoft Ignite 2025.txt,3758,3942,1400,1471,00:23:20,00:24:31,255,256,7700,48.8,51.2,Scott,184
+EP1 - Influence Without Authority.txt,2018,1922,792,753,00:13:12,00:12:33,60,59,3940,51.2,48.8,Mark,96
+EP10 - Zoomit.txt,1990,2132,777,835,00:12:57,00:13:55,66,66,4122,48.3,51.7,Scott,142
+EP11 - Systems Thinking.txt,3042,2991,1191,1169,00:19:51,00:19:29,95,95,6033,50.4,49.6,Mark,51
+EP12 - Scott & Mark Learn To... Reputate.txt,2154,2131,832,821,00:13:52,00:13:41,80,81,4285,50.3,49.7,Mark,23
+EP13 - Scott & Mark Learn To... YAP.txt,1243,1280,478,488,00:07:58,00:08:08,52,53,2523,49.3,50.7,Scott,37
+EP14 - Scott & Mark Learn To... ShaderGlass and Vibe Coding.txt,2468,2403,933,914,00:15:33,00:15:14,128,127,4871,50.7,49.3,Mark,65
+EP15 - Scott & Mark Learn To... Vibe coding and its limits (Part 2).txt,2484,2585,963,999,00:16:03,00:16:39,85,85,5069,49.0,51.0,Scott,101
+EP16 - Scott & Mark Learn To... Feedback.txt,2481,2453,953,938,00:15:53,00:15:38,98,99,4934,50.3,49.7,Mark,28
+EP17 - Scott & Mark Learn To... Induced Hallucinations.txt,2234,2175,854,821,00:14:14,00:13:41,110,111,4409,50.7,49.3,Mark,59
+EP18 - Scott & Mark Learn To... Self-Promotion.txt,1979,2141,761,826,00:12:41,00:13:46,82,83,4120,48.0,52.0,Scott,162
+EP19 - How Do Executives at Microsoft Manage Their Stress.txt,2877,2652,1105,1015,00:18:25,00:16:55,102,103,5529,52.0,48.0,Mark,225
+EP2 - How Not to Ship the Org Chart.txt,2011,2091,787,820,00:13:07,00:13:40,63,64,4102,49.0,51.0,Scott,80
+EP20 - Scott & Mark Learn To... Vibe Coding and Being Productive.txt,2185,2433,824,920,00:13:44,00:15:20,123,124,4618,47.3,52.7,Scott,248
+"EP21 - Live Vibe Coding - Who Talks More, Scott or Mark.txt",2807,2399,1063,895,00:17:43,00:14:55,149,148,5206,53.9,46.1,Mark,408
+EP22 - Scott and Mark Learn To... What Makes Good 1-1s.txt,2195,2200,843,841,00:14:03,00:14:01,88,88,4395,49.9,50.1,Scott,5
+"EP23 - Refchecker, a Useful Tool Coded by Mark and AI.txt",2538,3033,959,1155,00:15:59,00:19:15,137,137,5571,45.6,54.4,Scott,495
+"EP24 - Scott and Mark Learn To... Chatbot, Another Vibe-Coded Project by Mark.txt",1777,2081,654,774,00:10:54,00:12:54,132,131,3858,46.1,53.9,Scott,304
+EP25 - Level Up Navigating Career Growth in Microsoft.txt,2338,2719,907,1053,00:15:07,00:17:33,80,81,5057,46.2,53.8,Scott,381
+EP26 - Scott and Mark Learn To... AI-Assisted Coding Can AI Take the Wheel.txt,2785,2576,1079,997,00:17:59,00:16:37,83,83,5361,51.9,48.1,Mark,209
+"EP27 - Scott and Mark Learn To... The AI Productivity Trap Senior Boost, Junior Drag.txt",2129,2392,845,950,00:14:05,00:15:50,18,18,4521,47.1,52.9,Scott,263
+EP28 - Scott and Mark Learn To... Second Brain.txt,1641,2043,618,779,00:10:18,00:12:59,93,94,3684,44.5,55.5,Scott,402
+EP29 - Where to get news.txt,1212,681,461,247,00:07:41,00:04:07,66,66,1893,64.0,36.0,Mark,531
+EP3 - Use AI and Know AI Limitations.txt,2829,2841,1107,1117,00:18:27,00:18:37,84,84,5670,49.9,50.1,Scott,12
+EP30 - Get Ready for Ignite.txt,4109,3028,1570,1137,00:26:10,00:18:57,180,181,7137,57.6,42.4,Mark,1081
+EP31 - Pilot Coding - Vibe Coding for Real.txt,3362,2964,1286,1122,00:21:26,00:18:42,155,155,6326,53.1,46.9,Mark,398
+EP32 - Are Apps Dead.txt,1458,1095,563,416,00:09:23,00:06:56,52,53,2553,57.1,42.9,Mark,363
+EP33 - A Public 1-1 for Software Engineering Preceptorship.txt,1519,1337,586,514,00:09:46,00:08:34,61,61,2856,53.2,46.8,Mark,182
+"EP34 - Vibe Coding, for Real (Again).txt",2377,2621,902,999,00:15:02,00:16:39,118,119,4998,47.6,52.4,Scott,244
+EP4 - Pick a Programming Language.txt,2346,2219,919,865,00:15:19,00:14:25,77,76,4565,51.4,48.6,Mark,127
+EP5 - Undocumented APIs.txt,1756,1809,690,710,00:11:30,00:11:50,57,56,3565,49.3,50.7,Scott,53
+EP6 - Take a Dump.txt,2382,2368,933,927,00:15:33,00:15:27,74,74,4750,50.1,49.9,Mark,14
+EP7 - Find Joy in Hobbies.txt,2403,2485,941,973,00:15:41,00:16:13,78,79,4888,49.2,50.8,Scott,82
+EP8 - The History of Cloud.txt,3286,3320,1290,1304,00:21:30,00:21:44,100,101,6606,49.7,50.3,Scott,34
+EP9 - Public Speaking.txt,3055,3215,1193,1258,00:19:53,00:20:58,98,98,6270,48.7,51.3,Scott,160
