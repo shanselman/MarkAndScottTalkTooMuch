@@ -20,6 +20,40 @@ except ImportError:
     sys.exit(1)
 
 
+def find_transcript_files(directory: Optional[Path] = None) -> List[Path]:
+    """Find private speaker-labeled transcript files in the working directory."""
+    search_dir = directory or Path('.')
+    transcript_files = []
+    patterns_by_dir = {
+        search_dir: ('*.docx',),
+        search_dir / 'transcripts': ('*.docx', '*.txt'),
+    }
+
+    for candidate_dir, patterns in patterns_by_dir.items():
+        if not candidate_dir.exists():
+            continue
+
+        for pattern in patterns:
+            transcript_files.extend(
+                file_path for file_path in candidate_dir.glob(pattern)
+                if file_path.is_file() and not file_path.name.endswith(':sec.endpointdlp')
+            )
+
+    return sorted(set(transcript_files))
+
+
+def print_transcript_setup_help():
+    """Explain how the analyzer expects transcripts to be prepared."""
+    print("No transcript files found to analyze.")
+    print("This project expects private, speaker-labeled DOCX or TXT transcripts")
+    print("in the repo root or a local transcripts/ folder.")
+    print("Raw YouTube auto-captions usually mark speaker changes with '>>' but do not")
+    print("reliably identify whether the speaker is Mark or Scott.")
+    print("Prepare transcripts with lines such as 'Mark: ...' or 'Scott: ...' and rerun.")
+    print('To fetch the latest captions first, use: python -m yt_dlp --skip-download')
+    print('--write-auto-sub --sub-langs en-orig --sub-format vtt "<youtube-url>"')
+
+
 @dataclass
 class SpeakingSegment:
     """Represents a speaking segment with speaker, content, start and end times"""
@@ -62,6 +96,27 @@ class TranscriptAnalyzer:
         except Exception as e:
             print(f"Error reading {file_path}: {e}")
             return ""
+
+    def read_text_file(self, file_path: Path) -> str:
+        """Read text content from a UTF-8 transcript file."""
+        try:
+            return file_path.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            return file_path.read_text(encoding='utf-8-sig')
+        except Exception as e:
+            print(f"Error reading {file_path}: {e}")
+            return ""
+
+    def read_transcript(self, file_path: Path) -> str:
+        """Read transcript content from supported file types."""
+        suffix = file_path.suffix.lower()
+        if suffix == '.docx':
+            return self.read_docx(file_path)
+        if suffix == '.txt':
+            return self.read_text_file(file_path)
+
+        print(f"Unsupported transcript format: {file_path}")
+        return ""
     
     def extract_timestamps(self, text: str) -> List[str]:
         """Extract timestamps from text"""
@@ -161,7 +216,7 @@ class TranscriptAnalyzer:
         print(f"Analyzing: {file_path.name}")
         
         # Read the document
-        text = self.read_docx(file_path)
+        text = self.read_transcript(file_path)
         if not text:
             return None
         
@@ -286,7 +341,7 @@ def main():
     parser.add_argument(
         'files',
         nargs='*',
-        help='DOCX files to analyze (if none specified, analyzes all .docx files in current directory)'
+        help='Transcript files to analyze (DOCX/TXT). If none are specified, analyzes local transcript files automatically.'
     )
     parser.add_argument(
         '--verbose', '-v',
@@ -302,14 +357,10 @@ def main():
     if args.files:
         file_paths = [Path(f) for f in args.files]
     else:
-        # Find all .docx files in current directory
-        current_dir = Path('.')
-        file_paths = list(current_dir.glob('*.docx'))
-        # Filter out files with ':sec.endpointdlp' suffix
-        file_paths = [f for f in file_paths if not f.name.endswith(':sec.endpointdlp')]
+        file_paths = find_transcript_files()
     
     if not file_paths:
-        print("No DOCX files found to analyze.")
+        print_transcript_setup_help()
         return
     
     print(f"Found {len(file_paths)} transcript files to analyze...")
@@ -317,12 +368,12 @@ def main():
     # Analyze each file
     results = []
     for file_path in file_paths:
-        if file_path.exists() and file_path.suffix.lower() == '.docx':
+        if file_path.exists() and file_path.suffix.lower() in {'.docx', '.txt'}:
             result = analyzer.analyze_transcript(file_path)
             if result:
                 results.append(result)
         else:
-            print(f"Warning: {file_path} does not exist or is not a .docx file")
+            print(f"Warning: {file_path} does not exist or is not a supported transcript file")
     
     # Print results
     analyzer.print_analysis_results(results)

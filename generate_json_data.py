@@ -5,8 +5,11 @@ Generate JSON data file for the interactive visualization
 
 import json
 import re
-from pathlib import Path
-from transcript_analyzer import TranscriptAnalyzer
+from transcript_analyzer import (
+    TranscriptAnalyzer,
+    find_transcript_files,
+    print_transcript_setup_help,
+)
 
 
 def extract_episode_number(filename):
@@ -36,13 +39,10 @@ def generate_json_data():
     """Generate JSON data for the interactive visualization"""
     analyzer = TranscriptAnalyzer()
     
-    # Find all .docx files
-    current_dir = Path('.')
-    file_paths = list(current_dir.glob('*.docx'))
-    file_paths = [f for f in file_paths if not f.name.endswith(':sec.endpointdlp')]
+    file_paths = find_transcript_files()
     
     if not file_paths:
-        print("No DOCX files found.")
+        print_transcript_setup_help()
         return
     
     print(f"📊 Processing {len(file_paths)} files for interactive visualization...")
@@ -50,7 +50,7 @@ def generate_json_data():
     # Analyze each file
     data = []
     for file_path in file_paths:
-        if file_path.exists() and file_path.suffix.lower() == '.docx':
+        if file_path.exists():
             result = analyzer.analyze_transcript(file_path)
             if result:
                 episode_data = {
@@ -74,6 +74,10 @@ def generate_json_data():
                 
                 data.append(episode_data)
     
+    if not data:
+        print("No valid results to turn into JSON data.")
+        return []
+
     # Sort by episode number
     data.sort(key=lambda x: x['episodeNumber'])
     

@@ -44,7 +44,9 @@ Thumbs.db
 *.png
 *.csv
 transcript_data.json
+transcripts/
 
 # Temporary files
 *.tmp
 *.log
+.playwright-mcp/

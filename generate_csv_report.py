@@ -5,22 +5,21 @@ Generate CSV report from transcript analysis
 
 import csv
 import sys
-from pathlib import Path
-from transcript_analyzer import TranscriptAnalyzer
+from transcript_analyzer import (
+    TranscriptAnalyzer,
+    find_transcript_files,
+    print_transcript_setup_help,
+)
 
 
 def generate_csv_report(output_file: str = "transcript_analysis_report.csv"):
     """Generate a CSV report of the transcript analysis"""
     analyzer = TranscriptAnalyzer()
     
-    # Find all .docx files in current directory
-    current_dir = Path('.')
-    file_paths = list(current_dir.glob('*.docx'))
-    # Filter out files with ':sec.endpointdlp' suffix
-    file_paths = [f for f in file_paths if not f.name.endswith(':sec.endpointdlp')]
+    file_paths = find_transcript_files()
     
     if not file_paths:
-        print("No DOCX files found to analyze.")
+        print_transcript_setup_help()
         return
     
     print(f"Analyzing {len(file_paths)} files for CSV report...")
@@ -28,7 +27,7 @@ def generate_csv_report(output_file: str = "transcript_analysis_report.csv"):
     # Analyze each file
     results = []
     for file_path in file_paths:
-        if file_path.exists() and file_path.suffix.lower() == '.docx':
+        if file_path.exists():
             result = analyzer.analyze_transcript(file_path)
             if result:
                 results.append(result)

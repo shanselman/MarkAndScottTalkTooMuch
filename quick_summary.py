@@ -3,8 +3,11 @@
 Quick Summary Script - Shows who talks more in the podcast
 """
 
-from pathlib import Path
-from transcript_analyzer import TranscriptAnalyzer
+from transcript_analyzer import (
+    TranscriptAnalyzer,
+    find_transcript_files,
+    print_transcript_setup_help,
+)
 
 
 def quick_summary():
@@ -12,12 +15,10 @@ def quick_summary():
     analyzer = TranscriptAnalyzer()
     
     # Find all .docx files
-    current_dir = Path('.')
-    file_paths = list(current_dir.glob('*.docx'))
-    file_paths = [f for f in file_paths if not f.name.endswith(':sec.endpointdlp')]
+    file_paths = find_transcript_files()
     
     if not file_paths:
-        print("No DOCX files found.")
+        print_transcript_setup_help()
         return
     
     print("🎙️  MARK & SCOTT TALK TOO MUCH - ANALYSIS SUMMARY")
@@ -31,7 +32,7 @@ def quick_summary():
     mark_wins_words = 0
     
     for file_path in file_paths:
-        if file_path.exists() and file_path.suffix.lower() == '.docx':
+        if file_path.exists():
             result = analyzer.analyze_transcript(file_path)
             if result:
                 episodes_analyzed += 1

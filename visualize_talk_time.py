@@ -7,8 +7,11 @@ Visualize talk time data with two charts:
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
-from transcript_analyzer import TranscriptAnalyzer
+from transcript_analyzer import (
+    TranscriptAnalyzer,
+    find_transcript_files,
+    print_transcript_setup_help,
+)
 import re
 
 
@@ -43,13 +46,10 @@ def visualize_talk_time():
     
     analyzer = TranscriptAnalyzer()
     
-    # Find and analyze all files
-    current_dir = Path('.')
-    file_paths = list(current_dir.glob('*.docx'))
-    file_paths = [f for f in file_paths if not f.name.endswith(':sec.endpointdlp')]
+    file_paths = find_transcript_files()
     
     if not file_paths:
-        print("No DOCX files found.")
+        print_transcript_setup_help()
         return
     
     print("📊 Generating talk time visualizations...")
@@ -57,7 +57,7 @@ def visualize_talk_time():
     # Analyze each file
     results = []
     for file_path in file_paths:
-        if file_path.exists() and file_path.suffix.lower() == '.docx':
+        if file_path.exists():
             result = analyzer.analyze_transcript(file_path)
             if result:
                 results.append(result)

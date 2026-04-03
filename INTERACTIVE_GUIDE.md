@@ -31,8 +31,17 @@ Your interactive D3.js visualization includes:
 
 1. **Open the Visualization**:
    ```bash
-   # Open in your browser
-   open interactive_analysis.html
+   # Refresh the dataset
+   python3 refresh_from_youtube.py --run-analysis
+
+   # Serve the folder locally
+   python -m http.server 8765
+   ```
+
+   Then browse to:
+
+   ```text
+   http://127.0.0.1:8765/interactive_analysis.html
    ```
 
 2. **Explore Different Views**:
@@ -50,15 +59,24 @@ Your interactive D3.js visualization includes:
    - Toggle animations on/off based on preference
    - Use responsive design on any device
 
-## Data Source
+## Data Source and Refresh Workflow
 
-The visualization loads real data from `transcript_data.json`, which is generated from your actual podcast transcripts using:
+The visualization loads real data from `transcript_data.json`, which can be regenerated from the
+full show playlist using:
 
 ```bash
-python3 generate_json_data.py
+python3 refresh_from_youtube.py --run-analysis
 ```
 
-This ensures the interactive charts always reflect your latest analysis!
+This ensures the interactive charts always reflect your latest analysis.
+
+Important notes:
+
+- The refresh is **local-first** and keeps generated transcripts in `transcripts\`
+- Raw YouTube auto-captions do not reliably identify `Mark` versus `Scott`
+- The refresh script therefore uses a best-effort two-host turn-splitting heuristic
+- Review `transcripts\speaker_review.csv` for low-confidence episodes and add overrides in
+  `transcripts\speaker_overrides.json` when needed
 
 ## NY Times Style Features
 
